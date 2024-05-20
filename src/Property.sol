@@ -21,11 +21,21 @@ contract Property is Ownable {
         address lessee;
     }
 
+    event Log(string message, uint256 gas);
+
     PropertyMap private properties;
 
     constructor(address _owner) Ownable(_owner) {}
 
-    receive() external payable {}
+    receive() external payable {
+        emit Log("Receive : ", gasleft());
+    }
+
+    fallback() external payable {
+        emit Log("Fallback : ", gasleft());
+    }
+
+    function deposit() public payable {}
 
     function createProperty(
         string memory _name,
@@ -67,6 +77,9 @@ contract Property is Ownable {
         require(property.id != 0, "Property does not exist");
         require(!property.leased, "Property is already leased");
         require(msg.value == property.price, "Incorrect payment amount");
+
+        (bool ok,) = payable(address(this)).call{value: property.price}("");
+        require(ok, "Payment failed");
 
         property.leased = true;
         property.lessee = msg.sender;
@@ -116,12 +129,11 @@ contract Property is Ownable {
     function withdraw() public onlyOwner {
         require(address(this).balance > 0, "Insufficient balance");
         require(msg.sender == owner(), "Only owner can withdraw funds");
-        payable(owner()).transfer(address(this).balance);
+        (bool sent,) = payable(owner()).call{value: address(this).balance}("");
+        require(sent, "Failed to send Ether");
     }
     
     function getBalance() public view returns (uint256) {
         return address(this).balance;
     }
-
-    function deposit() public payable {}
 }
