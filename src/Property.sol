@@ -66,7 +66,7 @@ contract Property is Ownable {
 
         require(property.id != 0, "Property does not exist");
         require(!property.leased, "Property is already leased");
-        require(msg.value == property.price, "Incorrect payment amount"); // Convert ETH to Wei for comparison
+        require(msg.value == property.price, "Incorrect payment amount");
 
         property.leased = true;
         property.lessee = msg.sender;
