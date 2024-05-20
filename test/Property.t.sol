@@ -24,7 +24,7 @@ contract PropertyTest is Test {
     function testCreateProperty() public {
         string memory name = "Test Property";
         string memory location = "123 Main St";
-        uint256 price = 1000000;
+        uint256 price = 1;
         string memory description = "A beautiful property";
 
         // Call the function and store the transaction
@@ -37,7 +37,7 @@ contract PropertyTest is Test {
         // Assert property details
         assertEq(createdProperty.name, name);
         assertEq(createdProperty.location, location);
-        assertEq(createdProperty.price, price);
+        assertEq(createdProperty.price, 0.01 ether);
         assertEq(createdProperty.description, description);
         assertEq(createdProperty.owner, owner);
     }
@@ -45,7 +45,7 @@ contract PropertyTest is Test {
     function testCreateProperty_RevertDuplicateId() public {
         string memory name = "Test Property";
         string memory location = "123 Main St";
-        uint256 price = 1000000;
+        uint256 price = 1;
         string memory description = "A beautiful property";
 
         // Create a property first
@@ -59,15 +59,21 @@ contract PropertyTest is Test {
     function testRequestLease() public {
         string memory name = "Test Property";
         string memory location = "123 Main St";
-        uint256 price = 1000000;
+        uint256 price = 1;
         string memory description = "A beautiful property";
 
         // Create a property first
         uint256 propertyId = block.timestamp;
         propertyContract.createProperty(name, location, price, description);
 
+        uint256 contractBalance = address(propertyContract).balance;
+        console.log("Balance Before Lease : ", contractBalance);
         // Lease the property
-        propertyContract.requestLease{value: price}(propertyId);
+        propertyContract.requestLease{value: 0.01 ether}(propertyId);
+
+        //Fetch Contract Balance
+        contractBalance = address(propertyContract).balance;
+        console.log("Balance After Lease : ", contractBalance);
 
         // Fetch the created property
         Property.PropertyStruct memory createdProperty = propertyContract.getProperty(propertyId);
@@ -79,7 +85,7 @@ contract PropertyTest is Test {
     function testEndLease() public {
         string memory name = "Test Property";
         string memory location = "123 Main St";
-        uint256 price = 1000000;
+        uint256 price = 1;
         string memory description = "A beautiful property";
 
         // Create a property first
@@ -87,7 +93,7 @@ contract PropertyTest is Test {
         propertyContract.createProperty(name, location, price, description);
 
         // Lease the property
-        propertyContract.requestLease{value: price}(propertyId);
+        propertyContract.requestLease{value: 0.01 ether}(propertyId);
 
         // End the lease
         propertyContract.endLease(propertyId);
@@ -103,7 +109,7 @@ contract PropertyTest is Test {
     function testUpdateProperty() public {
         string memory name = "Test Property";
         string memory location = "123 Main St";
-        uint256 price = 1000000;
+        uint256 price = 1;
         string memory description = "A beautiful property";
 
         // Create a property first
@@ -113,7 +119,7 @@ contract PropertyTest is Test {
         // Update the property
         string memory updatedName = "Updated Property";
         string memory updatedLocation = "456 Main St";
-        uint256 updatedPrice = 2000000;
+        uint256 updatedPrice = 2;
         string memory updatedDescription = "An even more beautiful property";
 
         propertyContract.updateProperty(propertyId, updatedName, updatedLocation, updatedPrice, updatedDescription);
@@ -124,14 +130,14 @@ contract PropertyTest is Test {
         // Assert property details
         assertEq(createdProperty.name, updatedName);
         assertEq(createdProperty.location, updatedLocation);
-        assertEq(createdProperty.price, updatedPrice);
+        assertEq(createdProperty.price, 0.02 ether);
         assertEq(createdProperty.description, updatedDescription);
     }
 
     function testGetPropertiesCount() public {
         string memory name = "Test Property";
         string memory location = "123 Main St";
-        uint256 price = 1000000;
+        uint256 price = 1;
         string memory description = "A beautiful property";
 
         // Create a property first
@@ -147,7 +153,7 @@ contract PropertyTest is Test {
     function testGetAllProperties() public {
         string memory name = "Test Property";
         string memory location = "123 Main St";
-        uint256 price = 1000000;
+        uint256 price = 1;
         string memory description = "A beautiful property";
 
         // Create a property first

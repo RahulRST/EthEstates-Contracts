@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.25;
 
-// Import the Ownable contract from OpenZeppelin
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-contract Property is Ownable {
+contract Property {
     struct PropertyMap {
         uint256[] keys;
         mapping(uint256 => PropertyStruct) values;
     }
+
+    address public owner;
 
     struct PropertyStruct {
         uint256 id;
@@ -21,18 +20,16 @@ contract Property is Ownable {
         address lessee;
     }
 
-    event Log(string message, uint256 gas);
-
     PropertyMap private properties;
 
-    constructor(address _owner) Ownable(_owner) {}
+    constructor(address _owner){
+        owner = _owner;
+    }
 
     receive() external payable {
-        emit Log("Receive : ", gasleft());
     }
 
     fallback() external payable {
-        emit Log("Fallback : ", gasleft());
     }
 
     function deposit() public payable {}
@@ -42,9 +39,10 @@ contract Property is Ownable {
         string memory _location,
         uint256 _price,
         string memory _description
-    ) public onlyOwner {
+    ) public {
         uint256 newId = block.timestamp;
 
+        require(msg.sender == owner, "Only owner can create properties");
         require(
             properties.values[newId].id == 0,
             "Property with this ID already exists"
@@ -54,9 +52,9 @@ contract Property is Ownable {
             newId,
             _name,
             _location,
-            _price,
+            _price * 1 ether / 100,
             _description,
-            msg.sender,
+            owner,
             false,
             address(0)
         );
@@ -76,10 +74,7 @@ contract Property is Ownable {
 
         require(property.id != 0, "Property does not exist");
         require(!property.leased, "Property is already leased");
-        require(msg.value == property.price, "Incorrect payment amount");
-
-        (bool ok,) = payable(address(this)).call{value: property.price}("");
-        require(ok, "Payment failed");
+        require(msg.value == property.price, "Incorrect lease amount");
 
         property.leased = true;
         property.lessee = msg.sender;
@@ -101,14 +96,17 @@ contract Property is Ownable {
         string memory _location,
         uint256 _price,
         string memory _description
-    ) public onlyOwner {
+    ) public {
+
+        require(msg.sender == owner, "Only owner can update properties");
+
         PropertyStruct storage property = properties.values[_id];
 
         require(property.id != 0, "Property does not exist");
 
         property.name = _name;
         property.location = _location;
-        property.price = _price;
+        property.price = _price * 1 ether / 100;
         property.description = _description;
     }
 
@@ -126,10 +124,10 @@ contract Property is Ownable {
         return allProperties;
     }
 
-    function withdraw() public onlyOwner {
+    function withdraw() public {
         require(address(this).balance > 0, "Insufficient balance");
-        require(msg.sender == owner(), "Only owner can withdraw funds");
-        (bool sent,) = payable(owner()).call{value: address(this).balance}("");
+        require(msg.sender == owner, "Only owner can withdraw funds");
+        (bool sent,) = payable(owner).call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
     }
     
