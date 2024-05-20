@@ -18,12 +18,14 @@ contract Property is Ownable {
         string description;
         address owner;
         bool leased;
-        address leasee;
+        address lessee;
     }
 
     PropertyMap private properties;
 
     constructor(address _owner) Ownable(_owner) {}
+
+    receive() external payable {}
 
     function createProperty(
         string memory _name,
@@ -59,14 +61,15 @@ contract Property is Ownable {
         return properties.values[_id];
     }
 
-    function requestLease(uint256 _id) public {
+    function requestLease(uint256 _id) public payable {
         PropertyStruct storage property = properties.values[_id];
 
         require(property.id != 0, "Property does not exist");
         require(!property.leased, "Property is already leased");
+        require(msg.value == property.price, "Incorrect payment amount"); // Convert ETH to Wei for comparison
 
         property.leased = true;
-        property.leasee = msg.sender;
+        property.lessee = msg.sender;
     }
 
     function endLease(uint256 _id) public {
@@ -76,7 +79,7 @@ contract Property is Ownable {
         require(property.leased, "Property is not leased");
 
         property.leased = false;
-        property.leasee = address(0);
+        property.lessee = address(0);
     }
 
     function updateProperty(
@@ -109,4 +112,16 @@ contract Property is Ownable {
 
         return allProperties;
     }
+
+    function withdraw() public onlyOwner {
+        require(address(this).balance > 0, "Insufficient balance");
+        require(msg.sender == owner(), "Only owner can withdraw funds");
+        payable(owner()).transfer(address(this).balance);
+    }
+    
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    function deposit() public payable {}
 }

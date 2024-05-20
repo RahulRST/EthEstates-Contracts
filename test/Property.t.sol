@@ -67,18 +67,10 @@ contract PropertyTest is Test {
         propertyContract.createProperty(name, location, price, description);
 
         // Lease the property
-        propertyContract.requestLease(propertyId);
+        propertyContract.requestLease{value: price}(propertyId);
 
         // Fetch the created property
         Property.PropertyStruct memory createdProperty = propertyContract.getProperty(propertyId);
-        console.log("Property Id : ",createdProperty.id);
-        console.log("Property Name : ",createdProperty.name);
-        console.log("Property Location : ",createdProperty.location);
-        console.log("Property Price : ",createdProperty.price);
-        console.log("Property Description : ",createdProperty.description);
-        console.log("Property Owner : ",createdProperty.owner);
-        console.log("Property Leased : ",createdProperty.leased);
-        console.log("Property Leasee : ",createdProperty.leasee);
 
         // Assert property details
         assertEq(createdProperty.leased, true);
@@ -95,7 +87,7 @@ contract PropertyTest is Test {
         propertyContract.createProperty(name, location, price, description);
 
         // Lease the property
-        propertyContract.requestLease(propertyId);
+        propertyContract.requestLease{value: price}(propertyId);
 
         // End the lease
         propertyContract.endLease(propertyId);
@@ -105,7 +97,7 @@ contract PropertyTest is Test {
 
         // Assert property details
         assertEq(createdProperty.leased, false);
-        assertEq(createdProperty.leasee, address(0));
+        assertEq(createdProperty.lessee, address(0));
     }
 
     function testUpdateProperty() public {
@@ -170,7 +162,6 @@ contract PropertyTest is Test {
         // Assert the owner has the created property
         assertEq(allProperties.length, 1);
         assertEq(allProperties[0].id, propertyId);
-        // assertEq(allProperties[1].id, propertyId2);
     }
 }
 
