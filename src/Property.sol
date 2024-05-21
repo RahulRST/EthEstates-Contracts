@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.25;
 
-contract Property {
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract Property is Ownable {
     struct PropertyMap {
         uint256[] keys;
         mapping(uint256 => PropertyStruct) values;
     }
-
-    address public owner;
 
     struct PropertyStruct {
         uint256 id;
@@ -22,9 +22,7 @@ contract Property {
 
     PropertyMap private properties;
 
-    constructor(address _owner){
-        owner = _owner;
-    }
+    constructor(address _owner) Ownable(_owner){ }
 
     receive() external payable {
     }
@@ -39,10 +37,9 @@ contract Property {
         string memory _location,
         uint256 _price,
         string memory _description
-    ) public {
-        uint256 newId = block.timestamp;
+    ) public onlyOwner {
+        uint256 newId = properties.keys.length + 1;
 
-        require(msg.sender == owner, "Only owner can create properties");
         require(
             properties.values[newId].id == 0,
             "Property with this ID already exists"
@@ -54,7 +51,7 @@ contract Property {
             _location,
             _price * 1 ether / 100,
             _description,
-            owner,
+            owner(),
             false,
             address(0)
         );
@@ -85,6 +82,10 @@ contract Property {
 
         require(property.id != 0, "Property does not exist");
         require(property.leased, "Property is not leased");
+        require(
+            msg.sender == property.owner || msg.sender == property.lessee,
+            "Only owner or lessee can end lease"
+        );
 
         property.leased = false;
         property.lessee = address(0);
@@ -96,9 +97,7 @@ contract Property {
         string memory _location,
         uint256 _price,
         string memory _description
-    ) public {
-
-        require(msg.sender == owner, "Only owner can update properties");
+    ) public onlyOwner {
 
         PropertyStruct storage property = properties.values[_id];
 
@@ -124,14 +123,13 @@ contract Property {
         return allProperties;
     }
 
-    function withdraw() public {
+    function withdraw() public onlyOwner {
         require(address(this).balance > 0, "Insufficient balance");
-        require(msg.sender == owner, "Only owner can withdraw funds");
-        (bool sent,) = payable(owner).call{value: address(this).balance}("");
+        (bool sent,) = payable(owner()).call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
     }
     
-    function getBalance() public view returns (uint256) {
+    function getBalance() public view onlyOwner returns (uint256) {
         return address(this).balance;
     }
 }

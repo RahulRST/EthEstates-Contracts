@@ -28,7 +28,7 @@ contract PropertyTest is Test {
         string memory description = "A beautiful property";
 
         // Call the function and store the transaction
-        uint256 propertyId = block.timestamp;
+        uint256 propertyId = propertyContract.getPropertiesCount() + 1;
         propertyContract.createProperty(name, location, price, description);
 
         // Fetch the created property
@@ -42,20 +42,6 @@ contract PropertyTest is Test {
         assertEq(createdProperty.owner, owner);
     }
 
-    function testCreateProperty_RevertDuplicateId() public {
-        string memory name = "Test Property";
-        string memory location = "123 Main St";
-        uint256 price = 1;
-        string memory description = "A beautiful property";
-
-        // Create a property first
-        propertyContract.createProperty(name, location, price, description);
-
-        // Expect revert when creating with the same ID
-        vm.expectRevert("Property with this ID already exists");
-        propertyContract.createProperty(name, location, price, description);
-    }
-
     function testRequestLease() public {
         string memory name = "Test Property";
         string memory location = "123 Main St";
@@ -63,17 +49,11 @@ contract PropertyTest is Test {
         string memory description = "A beautiful property";
 
         // Create a property first
-        uint256 propertyId = block.timestamp;
+        uint256 propertyId = propertyContract.getPropertiesCount() + 1;
         propertyContract.createProperty(name, location, price, description);
 
-        uint256 contractBalance = address(propertyContract).balance;
-        console.log("Balance Before Lease : ", contractBalance);
         // Lease the property
         propertyContract.requestLease{value: 0.01 ether}(propertyId);
-
-        //Fetch Contract Balance
-        contractBalance = address(propertyContract).balance;
-        console.log("Balance After Lease : ", contractBalance);
 
         // Fetch the created property
         Property.PropertyStruct memory createdProperty = propertyContract.getProperty(propertyId);
@@ -89,7 +69,7 @@ contract PropertyTest is Test {
         string memory description = "A beautiful property";
 
         // Create a property first
-        uint256 propertyId = block.timestamp;
+        uint256 propertyId = propertyContract.getPropertiesCount() + 1;
         propertyContract.createProperty(name, location, price, description);
 
         // Lease the property
@@ -113,7 +93,7 @@ contract PropertyTest is Test {
         string memory description = "A beautiful property";
 
         // Create a property first
-        uint256 propertyId = block.timestamp;
+        uint256 propertyId = propertyContract.getPropertiesCount() + 1;
         propertyContract.createProperty(name, location, price, description);
 
         // Update the property
@@ -143,11 +123,13 @@ contract PropertyTest is Test {
         // Create a property first
         propertyContract.createProperty(name, location, price, description);
 
+        propertyContract.createProperty(name, location, price, description);
+
         // Fetch the owner's properties count
         uint256 propertiesCount = propertyContract.getPropertiesCount();
 
         // Assert the owner has the created property
-        assertEq(propertiesCount, 1);
+        assertEq(propertiesCount, 2);
     }
 
     function testGetAllProperties() public {
@@ -157,17 +139,19 @@ contract PropertyTest is Test {
         string memory description = "A beautiful property";
 
         // Create a property first
-        uint256 propertyId = block.timestamp;
+        uint256 propertyId = propertyContract.getPropertiesCount() + 1;
+        propertyContract.createProperty(name, location, price, description);
+
+        //Create another property
         propertyContract.createProperty(name, location, price, description);
 
         // Fetch the owner's properties
         Property.PropertyStruct[] memory allProperties = propertyContract.getAllProperties();
 
-        console.log("Properties Count : ", allProperties.length);
-
         // Assert the owner has the created property
-        assertEq(allProperties.length, 1);
+        assertEq(allProperties.length, 2);
         assertEq(allProperties[0].id, propertyId);
+        assertEq(allProperties[1].id, propertyId + 1);
     }
 }
 
